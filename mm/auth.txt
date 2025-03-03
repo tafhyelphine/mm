@@ -1,0 +1,79 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: AuthPage(),
+    );
+  }
+}
+
+class AuthPage extends StatefulWidget {
+  @override
+  _AuthPageState createState() => _AuthPageState();
+}
+
+class _AuthPageState extends State<AuthPage> {
+  bool isLogin = true;
+  bool obscurePassword = true;
+  final _formKey = GlobalKey<FormState>();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(isLogin ? "Login" : "Sign Up"),
+                TextFormField(
+                  decoration: InputDecoration(hintText: "Email"),
+                  validator: (value) => value != null && !value.contains('@') ? 'Enter a valid email' : null,
+                ),
+                TextFormField(
+                  decoration: InputDecoration(
+                    hintText: "Password",
+                    suffixIcon: IconButton(
+                      icon: Icon(obscurePassword ? Icons.visibility : Icons.visibility_off),
+                      onPressed: () => setState(() => obscurePassword = !obscurePassword),
+                    ),
+                  ),
+                  obscureText: obscurePassword,
+                  validator: (value) => value != null && value.length < 6 ? 'Password must be at least 6 chars' : null,
+                ),
+                if (!isLogin)
+                  TextFormField(
+                    decoration: InputDecoration(hintText: "Confirm Password"),
+                    obscureText: true,
+                    validator: (value) => value != null && value.length < 6 ? 'Password must be at least 6 chars' : null,
+                  ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {}
+                  },
+                  child: Text(isLogin ? "Login" : "Sign Up"),
+                ),
+                TextButton(
+                  onPressed: () => setState(() => isLogin = !isLogin),
+                  child: Text(isLogin ? "Don't have an account? Sign Up" : "Already have an account? Login"),
+                )
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

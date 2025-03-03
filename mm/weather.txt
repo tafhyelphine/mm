@@ -1,0 +1,78 @@
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+void main() {
+  runApp(MaterialApp(home: WeatherApp(), debugShowCheckedModeBanner: false));
+}
+
+class WeatherApp extends StatefulWidget {
+  @override
+  _WeatherAppState createState() => _WeatherAppState();
+}
+
+class _WeatherAppState extends State<WeatherApp> {
+  final TextEditingController _cityController = TextEditingController();
+  String temperature = "";
+  String description = "";
+  String icon = "";
+  bool isLoading = false;
+  String apiKey = "YOUR_API_KEY"; // 🔹 Replace with your API key
+
+  Future<void> fetchWeather(String city) async {
+    setState(() => isLoading = true);
+    final url = "https://api.openweathermap.org/data/2.5/weather?q=$city&appid=$apiKey&units=metric";
+
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          temperature = "${data["main"]["temp"]}°C";
+          description = data["weather"][0]["description"];
+          icon = "http://openweathermap.org/img/w/${data["weather"][0]["icon"]}.png";
+        });
+      } else {
+        setState(() {
+          temperature = "City not found";
+          description = "";
+          icon = "";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        temperature = "Error fetching data";
+        description = "";
+        icon = "";
+      });
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Weather App")),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _cityController,
+              decoration: InputDecoration(labelText: "Enter City", suffixIcon: IconButton(icon: Icon(Icons.search), onPressed: () => fetchWeather(_cityController.text))),
+            ),
+            SizedBox(height: 20),
+            isLoading ? CircularProgressIndicator() : Column(
+              children: [
+                if (icon.isNotEmpty) Image.network(icon, width: 80, height: 80),
+                Text(temperature, style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
+                Text(description, style: TextStyle(fontSize: 20)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

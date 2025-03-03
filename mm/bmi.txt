@@ -1,0 +1,55 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(MaterialApp(home: BMICalculator(), debugShowCheckedModeBanner: false));
+}
+
+class BMICalculator extends StatefulWidget {
+  @override
+  _BMICalculatorState createState() => _BMICalculatorState();
+}
+
+class _BMICalculatorState extends State<BMICalculator> {
+  final TextEditingController _weightController = TextEditingController();
+  final TextEditingController _heightController = TextEditingController();
+  double _bmi = 0;
+
+  void _calculateBMI() {
+    double weight = double.tryParse(_weightController.text) ?? 0;
+    double height = double.tryParse(_heightController.text) ?? 0;
+
+    if (weight > 0 && height > 0) {
+      setState(() {
+        _bmi = weight / (height * height);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("BMI Calculator")),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _weightController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(labelText: "Enter weight (kg)"),
+            ),
+            TextField(
+              controller: _heightController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(labelText: "Enter height (m)"),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(onPressed: _calculateBMI, child: Text("Calculate BMI")),
+            SizedBox(height: 20),
+            Text("BMI: ${_bmi.toStringAsFixed(2)}", style: TextStyle(fontSize: 20)),
+          ],
+        ),
+      ),
+    );
+  }
+}

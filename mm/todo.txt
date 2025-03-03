@@ -1,0 +1,111 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+void main() {
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => TodoProvider(),
+      child: MaterialApp(home: TodoScreen()),
+    ),
+  );
+}
+
+class TodoScreen extends StatelessWidget {
+  final _controller = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    var provider = Provider.of<TodoProvider>(context);
+    return Scaffold(
+      appBar: AppBar(title: Text("To-Do List")),
+      body: ListView.builder(
+        itemCount: provider.tasks.length,
+        itemBuilder: (context, index) => ListTile(
+          title: Text(provider.tasks[index]),
+          onTap: () => _editTask(context, provider, index),
+          trailing: IconButton(
+            icon: Icon(Icons.delete),
+            onPressed: () => provider.deleteTask(index),
+          ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _addTask(context, provider),
+        child: Icon(Icons.add),
+      ),
+    );
+  }
+
+  void _addTask(BuildContext context, TodoProvider provider) {
+    _controller.clear();
+    _showDialog(context, "New Task", () => provider.addTask(_controller.text));
+  }
+
+  void _editTask(BuildContext context, TodoProvider provider, int index) {
+    _controller.text = provider.tasks[index];
+    _showDialog(context, "Edit Task", () => provider.updateTask(index, _controller.text));
+  }
+
+  void _showDialog(BuildContext context, String title, VoidCallback onSave) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: TextField(controller: _controller),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              onSave();
+              Navigator.pop(context);
+            },
+            child: Text("Save"),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class TodoProvider extends ChangeNotifier {
+  List<String> tasks = [];
+
+  TodoProvider() {
+    _loadTasks();
+  }
+
+  void _loadTasks() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    tasks = prefs.getStringList("tasks") ?? [];
+    notifyListeners();
+  }
+
+  void _saveTasks() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setStringList("tasks", tasks);
+  }
+
+  void addTask(String task) {
+    if (task.isNotEmpty) {
+      tasks.add(task);
+      _saveTasks();
+      notifyListeners();
+    }
+  }
+
+  void updateTask(int index, String newTask) {
+    tasks[index] = newTask;
+    _saveTasks();
+    notifyListeners();
+  }
+
+  void deleteTask(int index) {
+    tasks.removeAt(index);
+    _saveTasks();
+    notifyListeners();
+  }
+}

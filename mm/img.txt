@@ -1,0 +1,70 @@
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+
+void main() {
+  runApp(MaterialApp(home: ImageGalleryApp(), debugShowCheckedModeBanner: false));
+}
+
+class ImageGalleryApp extends StatefulWidget {
+  @override
+  _ImageGalleryAppState createState() => _ImageGalleryAppState();
+}
+
+class _ImageGalleryAppState extends State<ImageGalleryApp> {
+  List<XFile?> _images = [];
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        _images.add(image);
+      });
+    }
+  }
+
+  void _viewImage(XFile image) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => FullScreenImage(imagePath: image.path)),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Image Gallery")),
+      body: Padding(
+        padding: EdgeInsets.all(8.0),
+        child: GridView.builder(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 8, mainAxisSpacing: 8),
+          itemCount: _images.length,
+          itemBuilder: (context, index) {
+            return GestureDetector(
+              onTap: () => _viewImage(_images[index]!),
+              child: Image.file(File(_images[index]!.path), fit: BoxFit.cover),
+            );
+          },
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _pickImage,
+        child: Icon(Icons.add),
+      ),
+    );
+  }
+}
+
+class FullScreenImage extends StatelessWidget {
+  final String imagePath;
+  FullScreenImage({required this.imagePath});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: Center(child: Image.file(File(imagePath))),
+    );
+  }
+}
