@@ -1,111 +1,106 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  runApp(
-    ChangeNotifierProvider(
-      create: (_) => TodoProvider(),
-      child: MaterialApp(home: TodoScreen()),
-    ),
-  );
+  runApp(MaterialApp(home: TodoApp(), debugShowCheckedModeBanner: false));
 }
 
-class TodoScreen extends StatelessWidget {
-  final _controller = TextEditingController();
-
+class TodoApp extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    var provider = Provider.of<TodoProvider>(context);
-    return Scaffold(
-      appBar: AppBar(title: Text("To-Do List")),
-      body: ListView.builder(
-        itemCount: provider.tasks.length,
-        itemBuilder: (context, index) => ListTile(
-          title: Text(provider.tasks[index]),
-          onTap: () => _editTask(context, provider, index),
-          trailing: IconButton(
-            icon: Icon(Icons.delete),
-            onPressed: () => provider.deleteTask(index),
-          ),
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _addTask(context, provider),
-        child: Icon(Icons.add),
-      ),
-    );
-  }
-
-  void _addTask(BuildContext context, TodoProvider provider) {
-    _controller.clear();
-    _showDialog(context, "New Task", () => provider.addTask(_controller.text));
-  }
-
-  void _editTask(BuildContext context, TodoProvider provider, int index) {
-    _controller.text = provider.tasks[index];
-    _showDialog(context, "Edit Task", () => provider.updateTask(index, _controller.text));
-  }
-
-  void _showDialog(BuildContext context, String title, VoidCallback onSave) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: TextField(controller: _controller),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text("Cancel"),
-          ),
-          TextButton(
-            onPressed: () {
-              onSave();
-              Navigator.pop(context);
-            },
-            child: Text("Save"),
-          ),
-        ],
-      ),
-    );
-  }
+  _TodoAppState createState() => _TodoAppState();
 }
 
-class TodoProvider extends ChangeNotifier {
-  List<String> tasks = [];
+class _TodoAppState extends State<TodoApp> {
+  final TextEditingController _taskController = TextEditingController();
+  List<String> _tasks = [];
 
-  TodoProvider() {
-    _loadTasks();
-  }
-
-  void _loadTasks() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    tasks = prefs.getStringList("tasks") ?? [];
-    notifyListeners();
-  }
-
-  void _saveTasks() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setStringList("tasks", tasks);
-  }
-
-  void addTask(String task) {
-    if (task.isNotEmpty) {
-      tasks.add(task);
-      _saveTasks();
-      notifyListeners();
+  void _addTask() {
+    if (_taskController.text.isNotEmpty) {
+      setState(() {
+        _tasks.add(_taskController.text);
+        _taskController.clear();
+      });
     }
   }
 
-  void updateTask(int index, String newTask) {
-    tasks[index] = newTask;
-    _saveTasks();
-    notifyListeners();
+  void _deleteTask(int index) {
+    setState(() {
+      _tasks.removeAt(index);
+    });
   }
 
-  void deleteTask(int index) {
-    tasks.removeAt(index);
-    _saveTasks();
-    notifyListeners();
+  void _editTask(int index) {
+    _taskController.text = _tasks[index];
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Edit Task"),
+          content: TextField(
+            controller: _taskController,
+            decoration: InputDecoration(hintText: "Enter task"),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _tasks[index] = _taskController.text;
+                  _taskController.clear();
+                });
+                Navigator.pop(context);
+              },
+              child: Text("Update"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("To-Do List")),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _taskController,
+              decoration: InputDecoration(
+                labelText: "Enter task",
+                suffixIcon: IconButton(
+                  icon: Icon(Icons.add),
+                  onPressed: _addTask,
+                ),
+              ),
+            ),
+            SizedBox(height: 20),
+            Expanded(
+              child: ListView.builder(
+                itemCount: _tasks.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text(_tasks[index]),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.edit),
+                          onPressed: () => _editTask(index),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.delete, color: Colors.red),
+                          onPressed: () => _deleteTask(index),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
