@@ -41,9 +41,15 @@ class _TimeZoneConverterScreenState extends State<TimeZoneConverterScreen> {
     final toZone = tz.getLocation(selectedToTimeZone);
 
     final fromTzTime = tz.TZDateTime.from(localTime, fromZone);
-    final toTzTime = fromTzTime.toLocal().add(toZone.currentTimeZone.offset - fromZone.currentTimeZone.offset);
+
+    final offsetDifference = Duration(
+      seconds: toZone.currentTimeZone.offset - fromZone.currentTimeZone.offset,
+    );
+
+    final toTzTime = fromTzTime.add(offsetDifference);
     return DateFormat('hh:mm a').format(toTzTime);
   }
+
 
   Future<void> pickTime(BuildContext context) async {
     final TimeOfDay? picked = await showTimePicker(
