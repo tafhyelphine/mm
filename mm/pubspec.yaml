@@ -35,3 +35,5 @@ flutter:
     - assets/rainy.json
     - assets/sunny.json
     - assets/snowy.json
+
+api = 45f8c53ccaf6e7486aff8e38cc4762c4
